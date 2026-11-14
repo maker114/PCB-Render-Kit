@@ -80,8 +80,8 @@ def _steam_blender_paths():
             steam_roots.append(winreg.QueryValueEx(key, "SteamPath")[0])
     except OSError:
         pass
-    steam_roots += [r"C:\Program Files (x86)\Steam", r"C:\Program Files\Steam",
-                    r"D:\Steam", r"E:\Steam"]
+    # 其他盘符的 Steam 库由 libraryfolders.vdf 覆盖，这里只补默认安装位置
+    steam_roots += [r"C:\Program Files (x86)\Steam", r"C:\Program Files\Steam"]
 
     found = []
     for root in steam_roots:
