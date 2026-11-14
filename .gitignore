@@ -1,0 +1,25 @@
+# 依赖（npm）
+node_modules/
+
+# 构建中间产物（发布产物在 /dist，另行跟踪）
+eda-extension/pcb-render-kit/dist/
+eda-extension/pcb-render-kit/build/dist/
+*.tsbuildinfo
+.eslintcache
+
+# 本地参考克隆（不是本仓库源码，来源见 README「参考仓库」）
+eda-extension/sdk/
+eda-extension/demo/
+
+# 编辑器 / 系统
+.vscode/
+*.log
+debug.log
+Thumbs.db
+desktop.ini
+
+# 渲染运行时数据（大文件，不进仓库）
+renders/
+*.blend
+*.blend1
+render/out/

@@ -1,0 +1,81 @@
+{
+	"name": "pcb-render-kit",
+	"uuid": "52fa3328a7fd48a6a70c105d294e65bc",
+	"displayName": "PCB 渲染素材一键导出",
+	"description": "一键把当前 PCB 导出为渲染/存档所需的全套文件：STEP 3D 模型、DXF 图形层、Gerber、BOM、贴片坐标、网表，并打包成一个 ZIP。",
+	"version": "1.0.0",
+	"publisher": "maker114",
+	"engines": {
+		"eda": "^3.2.0"
+	},
+	"license": "Apache-2.0",
+	"repository": {
+		"type": "extension-store",
+		"url": ""
+	},
+	"categories": "Other",
+	"keywords": [
+		"Tool",
+		"Export",
+		"Render",
+		"PCB"
+	],
+	"images": {
+		"logo": "./images/logo.png"
+	},
+	"homepage": "",
+	"bugs": "",
+	"activationEvents": {},
+	"entry": "./dist/index",
+	"dependentExtensions": {},
+	"headerMenus": {
+		"pcb": [
+			{
+				"id": "pcbRenderKitMenu",
+				"title": "渲染素材包",
+				"menuItems": [
+					{
+						"id": "exportAll",
+						"title": "一键导出全部（打包为 ZIP）",
+						"registerFn": "exportAllBundle"
+					},
+					{
+						"id": "exportStep",
+						"title": "仅导出 STEP 3D 模型",
+						"registerFn": "exportStep"
+					},
+					{
+						"id": "exportDxf",
+						"title": "仅导出 DXF 图形层",
+						"registerFn": "exportDxf"
+					},
+					{
+						"id": "exportGerber",
+						"title": "仅导出 Gerber 制版文件",
+						"registerFn": "exportGerber"
+					},
+					{
+						"id": "exportBom",
+						"title": "仅导出 BOM 物料表",
+						"registerFn": "exportBom"
+					},
+					{
+						"id": "exportPnp",
+						"title": "仅导出贴片坐标",
+						"registerFn": "exportPickPlace"
+					},
+					{
+						"id": "exportNetlist",
+						"title": "仅导出网表",
+						"registerFn": "exportNetlist"
+					},
+					{
+						"id": "about",
+						"title": "关于…",
+						"registerFn": "about"
+					}
+				]
+			}
+		]
+	}
+}
