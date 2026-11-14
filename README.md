@@ -2,6 +2,12 @@
 
 把 **立创EDA / 嘉立创EDA（专业版）** 画的 PCB，渲染成照片级 3D 效果图。
 
+
+[![license](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+[![release](https://img.shields.io/github/v/release/maker114/PCB-Render-Kit?color=success)](https://github.com/maker114/PCB-Render-Kit/releases)
+[![blender](https://img.shields.io/badge/Blender-4.2%2B-orange.svg)](https://www.blender.org/)
+[![python](https://img.shields.io/badge/Python-3.10%2B-3776AB.svg)](https://www.python.org/)
+
 > **需要什么**：一块画完的板子 + Blender + Python。
 > **得到什么**：2K/4K 的板子效果图（3/4 主图、俯视图、微距特写），每个元件独立分色，蓝色阻焊、金色焊盘、白色丝印和铜箔走线都还原。
 
@@ -105,7 +111,9 @@ cp -r skill/pcb-render ~/.claude/skills/pcb-render     # 或对应工具的技�
 
 1. 打开 **立创EDA（专业版）** → 打开你的 PCB
 2. 顶部菜单：`高级` → `扩展管理器...` → `导入`
-3. 选 [`dist/pcb-render-kit_v1.0.0.eext`](dist/pcb-render-kit_v1.0.0.eext)
+3. 选 `pcb-render-kit_v1.0.0.eext` —— 两种拿法：
+   - 不想克隆仓库：直接下载 [**Releases 附件**](https://github.com/maker114/PCB-Render-Kit/releases/download/v1.0.0/pcb-render-kit_v1.0.0.eext)
+   - 已经克隆：用仓库里的 [`dist/pcb-render-kit_v1.0.0.eext`](dist/pcb-render-kit_v1.0.0.eext)
 4. 确认扩展是**启用**状态（必要时重启 EDA）
 5. 打开 PCB 编辑器，顶部菜单出现 **「渲染素材包」** 就成功了
 
