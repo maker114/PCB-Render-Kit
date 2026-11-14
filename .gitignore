@@ -1,3 +1,8 @@
+# 本地配置（含个人路径，不进仓库）
+skill/pcb-render/config.json
+__pycache__/
+*.pyc
+
 # 依赖（npm）
 node_modules/
 

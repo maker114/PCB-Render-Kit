@@ -21,7 +21,6 @@ from PIL import Image, ImageDraw
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, HERE)
-sys.path.insert(0, r"E:\DSH WorkSpace\PCB\render\scripts")
 import glb_reader  # noqa: E402
 
 RENDER = os.path.dirname(os.path.dirname(HERE))     # .../PCB2/render

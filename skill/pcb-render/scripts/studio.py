@@ -35,7 +35,7 @@ Typical use
     studio.setup_camera((0, 0, 0), (0.10, 0.07, 0.0016), framing="three_quarter")
     studio.setup_lights((0, 0, 0), (0.10, 0.07, 0.0016))
     studio.add_floor((0, 0, 0), (0.10, 0.07, 0.0016))
-    studio.render_to(r"E:\\DSH WorkSpace\\PCB\\render\\out\\hero.png")
+    studio.render_to(r"<workdir>/render/out/hero.png")
 
 `setup_scene()` is a convenience wrapper that builds the whole rig.
 """

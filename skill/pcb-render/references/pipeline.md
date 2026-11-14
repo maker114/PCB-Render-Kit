@@ -3,7 +3,7 @@
 ## 目录约定
 
 ```
-<WorkDir>/                      # 一块板一个目录，例如 E:\DSH WorkSpace\PCB3
+<WorkDir>/                      # 一块板一个目录（任意位置，例如 ~/pcb/myboard）
   PCB1_3D.step                  # 素材包解出来的原件（只读，不要改）
   PCB1_DXF.dxf
   PCB1_BOM.xlsx
@@ -26,10 +26,10 @@
 设好变量：
 
 ```powershell
-$py     = "C:\Users\lenovo\.dsh\dsh-runtimes\dsh-primary-runtime\dependencies\python\python.exe"
-$bl     = "E:\SteamLibrary\steamapps\common\Blender\blender.exe"
+$py     = "python"                                   # 任意装了 requirements.txt 的 Python 3.10+
 $sc     = "<Skill>\scripts"
-$work   = "E:\DSH WorkSpace\PCB4"
+$bl     = & $py "$sc\env.py" --print-blender          # 自动探测；也可 --blender 手动指定
+$work   = "<WorkDir>"
 $render = "$work\render"
 $tex    = "$render\tex"
 $glb    = "$render\data\board.glb"

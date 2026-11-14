@@ -25,8 +25,10 @@ if (-not (Test-Path (Join-Path $proj "package.json"))) {
 $npmCmd = Get-Command npm.cmd -ErrorAction SilentlyContinue
 $npm = if ($null -ne $npmCmd) { $npmCmd.Source } else { $null }   # 5.1 不支持 ?. 运算符
 if (-not $npm) {
-    foreach ($cand in @("E:\nodejs\npm.cmd", "$env:ProgramFiles\nodejs\npm.cmd",
-                        "$env:APPDATA\npm\npm.cmd")) {
+    foreach ($cand in @("$env:ProgramFiles\nodejs\npm.cmd",
+                        "$env:LOCALAPPDATA\Programs\nodejs\npm.cmd",
+                        "$env:APPDATA\npm\npm.cmd",
+                        "/usr/local/bin/npm", "/opt/homebrew/bin/npm")) {
         if (Test-Path $cand) { $npm = $cand; break }
     }
 }

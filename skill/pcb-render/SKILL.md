@@ -30,11 +30,26 @@ allowed-tools: "Bash, Read, Write, Edit"
 
 ## 环境探测（每次开工先做）
 
-| 项 | 位置 |
+**脚本里不写死任何路径**，`scripts/env.py` 负责探测（先跑 `python scripts/env.py` 看报告）：
+
+| 项 | 怎么找 |
 |---|---|
-| Blender | `E:\SteamLibrary\steamapps\common\Blender\blender.exe`（Steam 版），否则在 `C:\Program Files\Blender Foundation` 找 |
-| Python | `C:\Users\lenovo\.dsh\dsh-runtimes\dsh-primary-runtime\dependencies\python\python.exe` |
-| 依赖 | `pip install cascadio ezdxf`；numpy/Pillow 自带 |
+| Blender | `--blender` 参数 → `config.json` 的 `blender` → 环境变量 `PCB_RENDER_BLENDER` → PATH → 各系统常见安装位置（Windows 的 Program Files / Steam 库、macOS 的 /Applications、Linux 的 /usr/bin、snap、flatpak） |
+| Python | 跑 `pipeline.py` 的那个解释器（`sys.executable`），所以用你自己装了依赖的 Python 启动即可 |
+| 依赖 | `python -m pip install -r requirements.txt`（cascadio / ezdxf / numpy / Pillow） |
+
+找不到 Blender 时的覆盖方式，二选一：
+
+```powershell
+# A. 命令行
+python pipeline.py --blender "C:/Program Files/Blender Foundation/Blender 5.2/blender.exe" ...
+
+# B. 配置文件（一次配好）
+#   把 config.example.json 复制成 config.json，填 "blender": "<路径>"
+#   也支持 %APPDATA%/pcb-render/config.json 或 ~/.config/pcb-render/config.json
+```
+
+缺依赖时 `pipeline.py` 会直接打印带解释器路径的安装命令，不会甩裸 traceback。
 
 **所有 Blender 调用都要带 `--factory-startup`。** 否则会加载用户偏好（中文界面），新建节点被本地化成「背景」，`studio.py` 之类按名字取节点的地方会炸。本仓库的 `studio.py` 已改成按类型取节点，但仍建议加该参数（还能避开不兼容插件的报错）。
 
@@ -44,8 +59,8 @@ allowed-tools: "Bash, Read, Write, Edit"
 
 ```powershell
 & $py "<skill>\scripts\pipeline.py" `
-    --package "E:\...\PCB1_渲染素材包2.zip" `
-    --workdir "E:\...\PCB4" `
+    --package "<素材包.zip>" `
+    --workdir "<工作目录>" `
     --resolution preview        # preview | 2k | 4k
 # 可选：--views hero,top,macro  --samples 160  --skip-render
 #       --macro-target 0.010,-0.010,0.0016  --macro-distance 0.062
@@ -114,7 +129,7 @@ DSH 由 `skill-filesystem` 插件按以下根目录发现 skill（rank 越小优
 | 项目 | `<项目根>/.dsh/skills` | 100 |
 | 项目 | `<项目根>/.agents/skills` | 200 |
 | 自定义 | `customSkillDirs` 配置（cordis.patch.yml 里 `skill-filesystem` 的 config） | 300 |
-| 用户 | `C:\Users\lenovo\.dsh\skills`（= dshHome/skills） | 400 |
+| 用户 | `%USERPROFILE%\.dsh\skills`（Windows）/ `~/.dsh/skills`（macOS、Linux） | 400 |
 | 用户 | `~/.agents/skills` | 500 |
 
 一个 skill = 一个目录 + `SKILL.md`。frontmatter **必须有** `name`（kebab-case，正则 `^[a-z0-9]+(?:-[a-z0-9]+)*$`）和 `description`；
@@ -123,15 +138,15 @@ DSH 由 `skill-filesystem` 插件按以下根目录发现 skill（rank 越小优
 
 ```powershell
 # 本机：仓库通过「目录联接」挂到 DSH 技能目录 —— 改仓库立即生效，只有一份内容
-cmd /c mklink /J "%USERPROFILE%\.dsh\skills\pcb-render" "E:\PCB-Render-Kit\skill\pcb-render"
+cmd /c mklink /J "%USERPROFILE%\.dsh\skills\pcb-render" "<本仓库>\skill\pcb-render"
 
 # 其他机器：普通复制即可
-Copy-Item -Recurse -Force "E:\PCB-Render-Kit\skill\pcb-render" "$env:USERPROFILE\.dsh\skills\pcb-render"
+Copy-Item -Recurse -Force "<本仓库>\skill\pcb-render" "$env:USERPROFILE\.dsh\skills\pcb-render"
 
 # 或直接用仓库脚本（默认 junction，-Copy 走复制）
-powershell -File "E:\PCB-Render-Kit\scripts\install-skill.ps1"
+powershell -File "<本仓库>\scripts\install-skill.ps1"
 ```
 
-**坑**：`E:\DeepseekHarnessBeta\resources\runtime\office-skills\` **不是**通用扫描目录 ——
+**坑**：DSH 安装目录下的 `resources/runtime/office-skills/` **不是**通用扫描目录 ——
 它是 office 插件自己的 `assetRoot`，塞进去不会被发现（踩过，白折腾一轮）。
 改完 skill 会自动热加载（provider 带 chokidar watcher），新会话必然可见。

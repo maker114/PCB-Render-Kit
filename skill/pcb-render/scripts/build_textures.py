@@ -927,9 +927,7 @@ def write_readme(raster, infos, extra):
         rows.append("| `%s.png` | %s | %d x %d |" % (name, lay, info["width"], info["height"]))
     table = "\n".join(rows)
     txt = README.format(
-        dxf=os.path.basename(DXF), py=os.path.join(
-            r"C:\Users\lenovo\.dsh\dsh-runtimes\dsh-primary-runtime\dependencies\python",
-            "python.exe"),
+        dxf=os.path.basename(DXF), py=sys.executable,
         bbox="[%.4f, %.4f, %.4f, %.4f]" % (xmin, ymin, xmax, ymax),
         W=raster.W, H=raster.H, ppmx=raster.ppm()[0], ss=raster.ss,
         xmin=xmin, ymin=ymin, xmax=xmax, ymax=ymax, bw=bw, bh=bh,

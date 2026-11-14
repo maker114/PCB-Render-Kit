@@ -1,0 +1,5 @@
+{
+  "_comment": "复制成 config.json 才会生效。所有键都可留空（留空=自动探测）。",
+  "blender": "",
+  "python": ""
+}

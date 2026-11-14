@@ -10,7 +10,7 @@ Steps (each also runnable alone, see references/pipeline.md):
   7. render hero / top / macro
 
 Usage:
-    python pipeline.py --package "E:\\...\\PCB1_渲染素材包2.zip" --workdir "E:\\...\\PCB4"
+    python pipeline.py --package "<素材包.zip>" --workdir "<工作目录>"
                        [--resolution preview|2k|4k] [--views hero,top,macro]
                        [--samples N] [--blender PATH]
 """
@@ -26,7 +26,8 @@ import sys
 import time
 
 HERE = os.path.dirname(os.path.abspath(__file__))
-DEFAULT_BLENDER = r"E:\SteamLibrary\steamapps\common\Blender\blender.exe"
+sys.path.insert(0, HERE)
+from env import find_blender as _find_blender, require_python_deps  # noqa: E402
 
 RESOLUTIONS = {
     "preview": dict(hero="800x800", top="800x800", macro="900x630", samples=64),
@@ -65,16 +66,8 @@ def run(cmd, what, cwd=None, expect_file=None):
 
 
 def find_blender(explicit):
-    if explicit and os.path.exists(explicit):
-        return explicit
-    if os.path.exists(DEFAULT_BLENDER):
-        return DEFAULT_BLENDER
-    for pattern in (r"C:\Program Files\Blender Foundation\**\blender.exe",
-                    r"E:\**\Blender\blender.exe"):
-        hits = glob.glob(pattern, recursive=True)
-        if hits:
-            return hits[0]
-    raise SystemExit("Blender not found; pass --blender PATH")
+    """Blender 路径全部交给 env.py 探测（--blender / config.json / PATH / 常见安装位置）。"""
+    return _find_blender(explicit or None)
 
 
 def step_unpack(package, workdir):
@@ -120,6 +113,7 @@ def main():
                     help="macro camera distance in metres")
     args = ap.parse_args()
 
+    require_python_deps()          # 缺依赖时给出安装命令，而不是裸 traceback
     blender = find_blender(args.blender)
     render = os.path.join(args.workdir, "render")
     tex = os.path.join(render, "tex")

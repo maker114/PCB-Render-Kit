@@ -1,144 +1,221 @@
 # PCB-Render-Kit
 
-把「立创EDA / 嘉立创EDA 专业版」的板子，变成照片级 3D 效果图。两件配套工具：
+把 **立创EDA / 嘉立创EDA（专业版）** 画的 PCB，渲染成照片级 3D 效果图。
 
-| 目录 | 是什么 |
-|---|---|
-| `skill/pcb-render/` | **渲染技能**（Agent Skills 格式）。一条命令把 EDA 导出包渲染成 2K/4K 主图、俯视图、微距 |
-| `eda-extension/` | **立创EDA 扩展** `pcb-render-kit`。在 PCB 编辑器里一键把渲染所需文件导出成一个 ZIP |
-| `dist/` | 已构建的扩展包 `pcb-render-kit_v1.0.0.eext`，可直接导入 EDA |
-| `scripts/` | 安装技能 / 重新构建扩展的辅助脚本 |
+> **需要什么**：一块画完的板子 + Blender + Python。
+> **得到什么**：2K/4K 的板子效果图（3/4 主图、俯视图、微距特写），每个元件独立分色，蓝色阻焊、金色焊盘、白色丝印和铜箔走线都还原。
 
-## 工作流
+整个流程只有两步：
 
 ```
-立创EDA PCB 编辑器
-   └─[扩展：渲染素材包]→ xxx_渲染素材包.zip   (STEP 3D + DXF + Gerber + BOM + 贴片坐标 + 网表)
-            │
-            └─[skill/pcb-render/pipeline.py]→ render/out/final/01_hero.png 02_top.png 03_macro.png
+① 在 EDA 里点一下「渲染素材包」，导出一个 zip
+② 跑一条命令，得到效果图
 ```
+
+> **English quick start**: install Blender 4.2+ and Python 3.10+, then
+> `pip install -r skill/pcb-render/requirements.txt`, copy `skill/pcb-render/` into your agent's skills directory
+> (`~/.dsh/skills/` or `~/.claude/skills/`), and run
+> `python skill/pcb-render/scripts/pipeline.py --package board.zip --workdir out --resolution 2k`.
+> Blender is auto-detected; override with `--blender` or `skill/pcb-render/config.json`.
+
+仓库包含两部分：
+
+| 目录 | 作用 | 必需吗 |
+|---|---|---|
+| [`skill/pcb-render/`](skill/pcb-render/) | 渲染技能：把 zip 变成效果图 | 必需 |
+| [`eda-extension/`](eda-extension/) | 立创EDA 扩展：一键导出素材包 zip | 可选（也可以手动导出 STEP + DXF） |
 
 ---
 
-## 一、安装渲染技能
+## 1. 先装环境
 
-技能目录本就是 DSH / Claude Code 通用的 **Agent Skills** 结构（`SKILL.md` + `scripts/` + `references/`）。
+| 软件 | 版本 | 说明 |
+|---|---|---|
+| **Blender** | 4.2 以上（推荐 5.x） | 渲染引擎，装好后不用打开 |
+| **Python** | 3.10 以上 | 跑渲染脚本 |
+| 立创EDA 专业版 | 3.2 以上 | 可选，用来导出素材包 |
 
-**本机（已装好，用 junction 直连本仓库）**
+装 Python 依赖（只需一次）：
 
-```powershell
-# 把仓库里的 skill 挂到 DSH 技能目录；改仓库 = 立即生效，不会两份漂移
-cmd /c mklink /J "%USERPROFILE%\.dsh\skills\pcb-render" "E:\PCB-Render-Kit\skill\pcb-render"
+```bash
+python -m pip install -r skill/pcb-render/requirements.txt
 ```
 
-**其他机器（普通复制即可）**
+> 国内网络慢可以加镜像：`-i https://pypi.tuna.tsinghua.edu.cn/simple`
+
+**Blender 不用配环境变量**：脚本会自动找（PATH、`C:\Program Files\Blender Foundation\`、Steam 库、`/Applications`、`/usr/bin` 等）。
+找不到时手动指定，二选一：
+
+```bash
+# 方式 A：命令行直接给
+python skill/pcb-render/scripts/pipeline.py --blender "C:/Program Files/Blender Foundation/Blender 5.2/blender.exe" ...
+
+# 方式 B：写进配置文件（一次配好，永久生效）
+# 把 skill/pcb-render/config.example.json 复制成 config.json，填上 blender 路径
+```
+
+先看看能不能找到：
+
+```bash
+python skill/pcb-render/scripts/env.py
+```
+
+输出里 `blender` 有路径就说明可以用了。
+
+---
+
+## 2. 装渲染技能（让 AI 自己会用）
+
+技能是标准 **Agent Skills** 目录，放进 AI 工具扫描的位置即可。选一个：
+
+**DeepSeek Harness（DSH）**
 
 ```powershell
-powershell -File scripts\install-skill.ps1 -Copy
-# 或手动：
+# Windows：目录联接（推荐，改仓库立即生效）
+cmd /c mklink /J "%USERPROFILE%\.dsh\skills\pcb-render" "<本仓库路径>\skill\pcb-render"
+
+# 或者直接复制
 Copy-Item -Recurse -Force .\skill\pcb-render "$env:USERPROFILE\.dsh\skills\pcb-render"
 ```
 
-一键脚本两种模式（默认 junction，`-Copy` 强制复制）：
-
-```powershell
-powershell -File scripts\install-skill.ps1
+```bash
+# macOS / Linux
+cp -r skill/pcb-render ~/.dsh/skills/pcb-render
 ```
 
-**验证**：新开会话里应能看到 `pcb-render` 技能；或直接看 DSH 技能目录是否可读 `SKILL.md`。
-（DSH 由 `skill-filesystem` 插件扫描 `~/.dsh/skills`、`<项目>/.dsh/skills` 等根目录，带文件监听，改完自动热加载。）
+**Claude Code / Codex 等**
 
-**用法**
-
-```
-对话里：「用 pcb-render 把这个包渲成 2K：<路径>.zip」
-命令行：
-  python skill\pcb-render\scripts\pipeline.py --package <zip> --workdir <目录> --resolution 2k
+```bash
+cp -r skill/pcb-render ~/.claude/skills/pcb-render     # 或对应工具的技能目录
 ```
 
-详细参数、构图速查、故障对照见 `skill/pcb-render/SKILL.md` 与 `references/`。
+**不想装也行**：直接跑命令（见下一节），或者告诉 AI「用 `skill/pcb-render/scripts/pipeline.py` 渲染这个 zip」。
+
+装好之后，直接对 AI 说：
+
+> 用 pcb-render 把这个包渲成 2K：`D:\board\PCB1_渲染素材包.zip`
+
+它就会自己跑完整条流程。
 
 ---
 
-## 二、安装 EDA 扩展
+## 3. 装 EDA 扩展（可选，推荐）
 
-1. 打开 **嘉立创EDA（专业版）**，打开任意 PCB 工程
+有了它，导出素材包只要点一下；没有它也可以手动导出 STEP 和 DXF。
+
+1. 打开 **立创EDA（专业版）** → 打开你的 PCB
 2. 顶部菜单：`高级` → `扩展管理器...` → `导入`
-3. 选择 `dist\pcb-render-kit_v1.0.0.eext`
-4. 在扩展管理器里确认状态为**启用**（必要时重启 EDA）
-5. 打开 PCB 编辑器，顶部菜单出现 **「渲染素材包」** 即安装成功
+3. 选 [`dist/pcb-render-kit_v1.0.0.eext`](dist/pcb-render-kit_v1.0.0.eext)
+4. 确认扩展是**启用**状态（必要时重启 EDA）
+5. 打开 PCB 编辑器，顶部菜单出现 **「渲染素材包」** 就成功了
 
-> 首次导入第三方扩展时 EDA 会提示「未知来源」，属正常现象（本地扩展未签名、未上架）。
+> 第一次装第三方扩展，EDA 会提示「未知来源」，这是正常的（本地扩展没签名）。
 
 菜单项：
 
-| 菜单项 | 作用 |
+| 菜单项 | 导出内容 |
 |---|---|
-| 一键导出全部（打包为 ZIP） | STEP / DXF / Gerber / BOM / 贴片坐标 / 网表 全部导出并打成一个 ZIP，只弹一次保存框 |
-| 仅导出 STEP 3D 模型 | `PCB1_3D.step`（装配体，含元件 3D 模型） |
-| 仅导出 DXF 图形层 | `PCB1_DXF.dxf`（丝印 / 阻焊 / 铜层 / 板框） |
-| 仅导出 Gerber 制版文件 | `PCB1_Gerber.zip` |
-| 仅导出 BOM 物料表 | `PCB1_BOM.xlsx` |
-| 仅导出贴片坐标 | `PCB1_PickAndPlace.xlsx` |
-| 仅导出网表 | `PCB1_Netlist.tel` |
-
-导出文件名前缀由 `eda-extension/pcb-render-kit/src/index.ts` 顶部的 `BASE_NAME` 控制。
+| **一键导出全部（打包为 ZIP）** | 全部文件打成一个 zip，只弹一次保存框 ← **用这个** |
+| 仅导出 STEP 3D 模型 | `PCB1_3D.step`（含元件 3D 模型） |
+| 仅导出 DXF 图形层 | `PCB1_DXF.dxf`（丝印/阻焊/铜层/板框） |
+| 仅导出 Gerber / BOM / 贴片坐标 / 网表 | 各自单独一个文件 |
 
 ---
 
-## 三、重新构建扩展
+## 4. 用起来
+
+### 第 1 步：导出素材包
+
+PCB 编辑器 → 顶部菜单 **「渲染素材包」** → **「一键导出全部（打包为 ZIP）」** → 存到任意位置。
+
+（不用扩展的话，需要自己准备一个 zip，里面至少有 `*_3D.step` 和 `*_DXF.dxf`。）
+
+### 第 2 步：渲染
+
+```bash
+# 先出快图看构图（约 1 分钟，800px）
+python skill/pcb-render/scripts/pipeline.py \
+    --package "D:/board/PCB1_渲染素材包.zip" \
+    --workdir "D:/board/render-out" \
+    --resolution preview
+
+# 满意后出正式图（2K 约 2~3 分钟，4K 更久）
+python skill/pcb-render/scripts/pipeline.py \
+    --package "D:/board/PCB1_渲染素材包.zip" \
+    --workdir "D:/board/render-out" \
+    --resolution 2k
+```
+
+常用参数：
+
+| 参数 | 作用 |
+|---|---|
+| `--resolution preview / 2k / 4k` | 分辨率档位（**先用 preview 试构图**） |
+| `--views hero,top,macro` | 只出部分图，例如 `--views hero` |
+| `--samples 200` | 采样数，越高越干净也越慢 |
+| `--blender <路径>` | 手动指定 Blender |
+| `--skip-render` | 只建场景不渲染（改材质后用） |
+| `--macro-target X,Y` `--macro-distance 0.06` | 微距瞄准点和机位距离（单位：米） |
+
+### 第 3 步：拿图
+
+结果在 `<workdir>/render/out/final/`：
+
+| 文件 | 内容 |
+|---|---|
+| `01_hero.png` | 3/4 主图（首图） |
+| `02_top.png` | 俯视图 |
+| `03_macro.png` | 微距特写 |
+| `*_16bit.png` | 16 位母版（后期用） |
+| `*.jpg` | 同尺寸 JPEG，方便直接发 |
+
+**出图后请按 100% 放大抽查 3 处**：焊盘、走线、丝印文字。缩略图看不出问题。
+
+---
+
+## 5. 出问题了
+
+| 症状 | 解决 |
+|---|---|
+| 提示缺少 Python 依赖 | 按报错里给的命令 `pip install -r ...requirements.txt` |
+| 提示 Blender not found | `--blender "路径"`，或写进 `config.json`（见第 1 节） |
+| 走线看不见 / 板子一片纯蓝 | 素材包里的 STEP 没带铜层产品，重新用扩展「一键导出全部」 |
+| 丝印文字错位 | 同上，导出时确保勾选/包含 STEP 3D（丝印从 STEP 取，不用 DXF 重绘） |
+| 微距还是整板 | 加 `--distance 0.05~0.07` |
+| 渲染特别慢 | 不要同时跑两个渲染任务；笔记本拔电池、插电源 |
+
+更多问题与原因分析见 [`skill/pcb-render/references/pitfalls.md`](skill/pcb-render/references/pitfalls.md)
+和 [`SKILL.md`](skill/pcb-render/SKILL.md) 里的故障对照表。
+
+---
+
+## 6. 目录结构
+
+```
+PCB-Render-Kit/
+├─ skill/pcb-render/          渲染技能
+│  ├─ SKILL.md                技能说明（AI 读这个）
+│  ├─ requirements.txt        Python 依赖
+│  ├─ config.example.json     Blender 路径等覆盖配置
+│  ├─ scripts/                11 个脚本 + env.py（自动探测环境）
+│  └─ references/             分步命令、踩坑记录、材质与构图参数
+├─ eda-extension/
+│  ├─ pcb-render-kit/         扩展源码（TypeScript）
+│  ├─ sdk/  demo/             官方 SDK 参考克隆（不跟踪，构建不需要）
+│  └─ README.md               扩展的开发笔记
+├─ dist/                      构建好的 .eext，可直接导入
+└─ scripts/                   install-skill.ps1 / build-eext.ps1
+```
+
+想改扩展？见 [`eda-extension/README.md`](eda-extension/README.md)，重新构建：
 
 ```powershell
 powershell -File scripts\build-eext.ps1
-# 内部等价于：
-#   cd eda-extension\pcb-render-kit
-#   npm install && npm run build        →  build\dist\pcb-render-kit_v<版本>.eext
-#   再把产物复制到仓库 dist\
 ```
-
-改代码后记得递增 `eda-extension/pcb-render-kit/extension.json` 里的 `version`，否则 EDA 可能视为同版本不更新。
-
-**参考仓库**（本地克隆，已 gitignore，构建不需要它们）：
-
-| 目录 | 来源 |
-|---|---|
-| `eda-extension/sdk/` | <https://github.com/easyeda/pro-api-sdk.git> |
-| `eda-extension/demo/` | <https://github.com/easyeda/eext-extension-demo.git> |
-
-需要时重新拉取：
-
-```powershell
-cd eda-extension
-git clone --depth 1 https://github.com/easyeda/pro-api-sdk.git sdk
-git clone --depth 1 https://github.com/easyeda/eext-extension-demo.git demo
-```
-
-扩展用到的官方 API 清单（STEP / DXF / Gerber / BOM / PnP / 网表 / 保存 / 菜单注册）见
-`eda-extension/README.md` 的「用到的官方 API」一节。
 
 ---
 
-## 四、环境要求
+## 7. 许可
 
-| 用途 | 要求 |
-|---|---|
-| 渲染 | Blender **5.2 LTS**（Steam 版亦可）；GPU 可选（有 OptiX 用 GPU，否则 CPU 慢但能出） |
-| 渲染脚本 | Python 3.12+，依赖 `cascadio`、`ezdxf`、`numpy`、`Pillow` |
-| 构建扩展 | Node.js 20+、npm（国内可设 registry 为 npmmirror） |
-| EDA | 立创EDA 专业版 3.2+（`engines.eda: ^3.2.0`） |
-
-Blender 与 Python 的具体路径在 `skill/pcb-render/SKILL.md` 的「环境探测」一节，换机器时改那里。
-
----
-
-## 五、仓库约定
-
-**被跟踪**：技能全部内容、扩展源码（`src/`、`extension.json`、`package.json`、`build/`、`config/`、`locales/`、`iframe/`、图标、文档）、发布产物 `dist/*.eext`。
-
-**被忽略**：`node_modules/`、扩展的构建中间产物、`sdk/`、`demo/`、渲染运行时的 `.blend` 与出图。
-
-**注意 junction 的副作用**：本机的 `%USERPROFILE%\.dsh\skills\pcb-render` 是本仓库 `skill/pcb-render` 的目录联接，
-也就是说**仓库是唯一真源**。因此在仓库里 `git checkout` 切分支、`git clean`、改技能文件，都会立刻反映到 DSH 已加载的技能上
-（DSH 有文件监听，会热更新）。这是刻意设计，但切分支前请确认当前分支的技能是可用的。
-
-**许可**：扩展工程沿用模板的 Apache-2.0（见 `eda-extension/pcb-render-kit/LICENSE`）。
+本仓库自有代码采用 **MIT**（见 [LICENSE](LICENSE)）。
+`eda-extension/pcb-render-kit/` 由立创EDA 官方扩展模板派生，沿用模板的 **Apache-2.0**（见该目录下 `LICENSE`）。
