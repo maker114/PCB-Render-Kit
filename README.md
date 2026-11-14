@@ -137,4 +137,8 @@ Blender 与 Python 的具体路径在 `skill/pcb-render/SKILL.md` 的「环境�
 
 **被忽略**：`node_modules/`、扩展的构建中间产物、`sdk/`、`demo/`、渲染运行时的 `.blend` 与出图。
 
+**注意 junction 的副作用**：本机的 `%USERPROFILE%\.dsh\skills\pcb-render` 是本仓库 `skill/pcb-render` 的目录联接，
+也就是说**仓库是唯一真源**。因此在仓库里 `git checkout` 切分支、`git clean`、改技能文件，都会立刻反映到 DSH 已加载的技能上
+（DSH 有文件监听，会热更新）。这是刻意设计，但切分支前请确认当前分支的技能是可用的。
+
 **许可**：扩展工程沿用模板的 Apache-2.0（见 `eda-extension/pcb-render-kit/LICENSE`）。
