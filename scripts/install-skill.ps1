@@ -1,4 +1,4 @@
-# 把本仓库的 skill/pcb-render 安装到 DSH 技能目录。
+﻿# 把本仓库的 skill/pcb-render 安装到 DSH 技能目录。
 #
 #   默认：建 junction（目录联接）—— 改仓库立即生效，只有一份内容
 #   -Copy：普通复制 —— 适合其他机器 / 不支持 junction 的场景

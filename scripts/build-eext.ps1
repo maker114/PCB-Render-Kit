@@ -1,4 +1,4 @@
-# 重新构建立创EDA 扩展，并把 .eext 复制到仓库 dist/。
+﻿# 重新构建立创EDA 扩展，并把 .eext 复制到仓库 dist/。
 #
 # 用法：
 #   powershell -File scripts\build-eext.ps1
@@ -22,7 +22,8 @@ if (-not (Test-Path (Join-Path $proj "package.json"))) {
 }
 
 # 定位 npm：优先 PATH，其次常见安装位置
-$npm = (Get-Command npm.cmd -ErrorAction SilentlyContinue)?.Source
+$npmCmd = Get-Command npm.cmd -ErrorAction SilentlyContinue
+$npm = if ($null -ne $npmCmd) { $npmCmd.Source } else { $null }   # 5.1 不支持 ?. 运算符
 if (-not $npm) {
     foreach ($cand in @("E:\nodejs\npm.cmd", "$env:ProgramFiles\nodejs\npm.cmd",
                         "$env:APPDATA\npm\npm.cmd")) {
