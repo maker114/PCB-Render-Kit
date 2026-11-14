@@ -2,7 +2,6 @@
 
 把 **立创EDA / 嘉立创EDA（专业版）** 画的 PCB，渲染成照片级 3D 效果图。
 
-
 [![license](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 [![release](https://img.shields.io/github/v/release/maker114/PCB-Render-Kit?color=success)](https://github.com/maker114/PCB-Render-Kit/releases)
 [![blender](https://img.shields.io/badge/Blender-4.2%2B-orange.svg)](https://www.blender.org/)
@@ -18,11 +17,20 @@
 ② 跑一条命令，得到效果图
 ```
 
-> **English quick start**: install Blender 4.2+ and Python 3.10+, then
-> `pip install -r skill/pcb-render/requirements.txt`, copy `skill/pcb-render/` into your agent's skills directory
-> (`~/.dsh/skills/` or `~/.claude/skills/`), and run
-> `python skill/pcb-render/scripts/pipeline.py --package board.zip --workdir out --resolution 2k`.
-> Blender is auto-detected; override with `--blender` or `skill/pcb-render/config.json`.
+**语言**：中文 · [English](README.en.md)
+
+## 效果图
+
+| 3/4 主图（4K） | 俯视图 |
+|---|---|
+| <img src="docs/images/hero.jpg" width="720"> | <img src="docs/images/top.jpg" width="620"> |
+
+| 微距细节（焊盘 / 丝印 / 走线） | 小尺寸方板 |
+|---|---|
+| <img src="docs/images/detail.jpg" width="620"> | <img src="docs/images/board-square.jpg" width="560"> |
+
+每个元件都是独立的物理材质（镀金引脚、MLCC 陶瓷本体、IC 黑色环氧、白色塑料壳、屏蔽罩），
+所以"分色"来自 STEP 几何本身，而不是一张平涂贴图。
 
 仓库包含两部分：
 
